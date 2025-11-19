@@ -6,7 +6,7 @@
   "type": "module",
 "scripts": {
   "build": "rollup -c",
-  "start": "npm run build && node dist/app.js"
+  "start": "node dist/app.js"
 },
   "keywords": [],
   "dependencies": {
