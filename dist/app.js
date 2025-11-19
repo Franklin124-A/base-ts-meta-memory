@@ -1045,7 +1045,7 @@ function verificarCedula(cedula) {
         if (usuario) {
             return {
                 encontrado: true,
-                nombre: usuario.nombre
+                nombre: usuario.nombre,
             };
         }
         else {
@@ -1077,62 +1077,49 @@ const menuFlow = addKeyword(utils.setEvent('MENU'))
     '',
     '*Responde con el número de la opción que necesitas*',
     '',
-    'ℹ️ Puedes salir del menu escribiendo *"Salir"*'
+    'ℹ️ Puedes salir del menu escribiendo *"Salir"*',
 ].join('\n'), { capture: true }, async (ctx, { flowDynamic, gotoFlow, endFlow }) => {
     const option = ctx.body.trim().toLowerCase();
     if (option === '0' || option.includes('salir')) {
         await flowDynamic('Gracias por contactar con Recursos Humanos. ¡Hasta pronto! 👋');
         return endFlow();
     }
-    if (option === '1' || option.includes('seguridad')) {
-        return gotoFlow(seguridadSocialFlow);
-    }
-    else if (option === '2' || option.includes('vacacion') || option.includes('permiso')) {
-        return gotoFlow(solicitudesFlow);
-    }
-    else if (option === '3' || option.includes('beneficio')) {
-        return gotoFlow(beneficiosFlow);
-    }
-    else if (option === '4' || option.includes('reclutamiento')) {
-        return gotoFlow(concursosFlow);
-    }
-    else if (option === '5' || option.includes('agente') || option.includes('humano')) {
-        return gotoFlow(afiliacionesFlow);
-    }
-    else if (option === '6' || option.includes('auxilio') || option.includes('transporte')) {
-        return gotoFlow(auxiliosFlow);
-    }
-    else if (option === '7' || option.includes('rutas') || option.includes('transporte')) {
-        return gotoFlow(rutasFlow);
-    }
-    else if (option === '8' || option.includes('compra') || option.includes('compras')) {
-        return gotoFlow(comprasFlow);
-    }
-    else if (option === '9' || option.includes('actualizacion') || option.includes('datos')) {
-        return gotoFlow(actualizacionFlow);
-    }
-    else if (option === '10' || option.includes('bienestar') || option.includes('datos')) {
-        return gotoFlow(bienestarFlow);
-    }
-    else if (option === '11' || option.includes('bienestar') || option.includes('datos')) {
-        return gotoFlow(vacantesFlow);
-    }
-    else if (option === '12' || option.includes('otros') || option.includes('eventos')) {
-        return gotoFlow(eventosFlow);
-    }
-    else {
-        await flowDynamic([
-            '⚠️ No he entendido tu respuesta.',
-            '',
-            'Por favor selecciona una opción válida (1-10) o escribe "salir" para terminar la conversación.'
-        ].join('\n'));
-        return gotoFlow(menuFlow);
+    switch (option) {
+        case '1':
+            return gotoFlow(seguridadSocialFlow);
+        case '2':
+            return gotoFlow(solicitudesFlow);
+        case '3':
+            return gotoFlow(beneficiosFlow);
+        case '4':
+            return gotoFlow(concursosFlow);
+        case '5':
+            return gotoFlow(afiliacionesFlow);
+        case '6':
+            return gotoFlow(auxiliosFlow);
+        case '7':
+            return gotoFlow(rutasFlow);
+        case '8':
+            return gotoFlow(comprasFlow);
+        case '9':
+            return gotoFlow(actualizacionFlow);
+        case '10':
+            return gotoFlow(bienestarFlow);
+        case '11':
+            return gotoFlow(vacantesFlow);
+        case '12':
+            return gotoFlow(eventosFlow);
+        default:
+            await flowDynamic([
+                '⚠️ No he entendido tu respuesta.',
+                '',
+                'Por favor selecciona una opción válida (1-10) o escribe "salir" para terminar la conversación.',
+            ].join('\n'));
+            return gotoFlow(menuFlow);
     }
 });
 const volverMenuFlow = addKeyword(['menu', 'volver', 'inicio', 'principal', 'regresar'])
-    .addAction(async (_, { gotoFlow }) => {
-    return gotoFlow(menuFlow);
-});
+    .addAction(async (_, { gotoFlow }) => gotoFlow(menuFlow));
 const helpFlow = addKeyword(['ayuda', 'help', 'opciones', 'comandos'])
     .addAnswer('🆘 *Centro de Ayuda*')
     .addAnswer([
@@ -1145,28 +1132,27 @@ const helpFlow = addKeyword(['ayuda', 'help', 'opciones', 'comandos'])
     '• Escribe *reclutamiento* para procesos de selección',
     '• Escribe *agente* para hablar con un humano',
     '• Escribe *auxilio* para ver el menu',
-    '¿En qué más puedo ayudarte?'
+    '¿En qué más puedo ayudarte?',
 ].join('\n'));
-const welcomeFlow = addKeyword(['hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'Holi', 'hola', 'holi', 'buenas tardes', 'buenas noches', 'Buenas tardes', 'Buenas noches', 'Hola como estan'])
-    .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S., el mejor lugar para trabajar!*\n Soy tu Asistente Virtual de Recursos Humanos, diseñado exclusivamente para nuestros colaboradores .')
+const welcomeFlow = addKeyword([
+    'hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'holi', 'buenas tardes', 'buenas noches',
+])
+    .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!*\nSoy tu Asistente Virtual de Recursos Humanos.')
     .addAnswer([
     'Para acceder a nuestros servicios, *necesito verificar tu identidad.*',
     '',
-    'Por favor, *ingresa tu número de cédula*:'
+    'Por favor, *ingresa tu número de cédula*:',
 ].join('\n'), { capture: true }, async (ctx, { flowDynamic, gotoFlow, state }) => {
     const cedula = ctx.body.trim();
     const resultado = verificarCedula(cedula);
     if (resultado.encontrado) {
-        await state.update({
-            cedula: cedula,
-            nombre: resultado.nombre
-        });
+        await state.update({ cedula, nombre: resultado.nombre });
         await flowDynamic([
             '✅ *Identidad verificada correctamente*',
             '',
             `¡Hola ${resultado.nombre}! Tu cédula ${cedula} ha sido validada.`,
             '',
-            'Accediendo al menú principal...'
+            'Accediendo al menú principal...',
         ].join('\n'));
         return gotoFlow(menuFlow);
     }
@@ -1176,7 +1162,7 @@ const welcomeFlow = addKeyword(['hola', 'buenos dias', 'buenas', 'hi', 'hello', 
             '',
             'Lo siento, la cédula ingresada no se encuentra en nuestro sistema.',
             '',
-            'Por favor, verifica el número e intenta nuevamente o contacta a soporte técnico.'
+            'Por favor, verifica el número e intenta nuevamente o contacta a soporte técnico.',
         ].join('\n'));
         return gotoFlow(welcomeFlow);
     }
@@ -1205,7 +1191,7 @@ const main = async () => {
         numberId: process.env.META_PHONE_NUMBER_ID,
         verifyToken: process.env.VERIFY_TOKEN,
         version: 'v22.0',
-        appSecret: process.env.META_APP_SECRET
+        appSecret: process.env.META_APP_SECRET,
     });
     const adapterDB = new MemoryDB();
     const { handleCtx, httpServer } = await createBot({
@@ -1232,7 +1218,8 @@ const main = async () => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ status: 'ok', number, intent }));
     }));
-    httpServer(+PORT);
+    httpServer(Number(PORT));
+    console.log(`🛜 Server running on port ${PORT}`);
 };
 main();
 
