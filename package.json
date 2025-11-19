@@ -4,12 +4,10 @@
   "description": "",
   "main": "dist/app.js",
   "type": "module",
-  "scripts": {
-  "build": "rollup -c",                
-  "postinstall": "npm run build",       
-  "start": "node dist/app.js",          
-  "dev": "npx nodemon --delay 1500ms ./src/app.ts"
-  },
+"scripts": {
+  "build": "rollup -c",
+  "start": "npm run build && node dist/app.js"
+},
   "keywords": [],
   "dependencies": {
     "@builderbot/bot": "^1.2.5",

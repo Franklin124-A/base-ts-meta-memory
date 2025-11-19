@@ -22,9 +22,9 @@ FROM node:21-alpine3.18 as deploy
 
 WORKDIR /app
 
-ARG PORT
-ENV PORT $PORT
-EXPOSE $PORT
+ARG PORT=3000
+ENV PORT=$PORT
+EXPOSE 3000
 
 COPY --from=builder /app/assets ./assets
 COPY --from=builder /app/dist ./dist
