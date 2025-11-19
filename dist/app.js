@@ -1194,30 +1194,11 @@ const main = async () => {
         appSecret: process.env.META_APP_SECRET,
     });
     const adapterDB = new MemoryDB();
-    const { handleCtx, httpServer } = await createBot({
+    const { httpServer } = await createBot({
         flow: adapterFlow,
         provider: adapterProvider,
         database: adapterDB,
     });
-    adapterProvider.server.post('/v1/messages', handleCtx(async (bot, req, res) => {
-        const { number, message, urlMedia } = req.body;
-        await bot.sendMessage(number, message, { media: urlMedia ?? null });
-        return res.end('sended');
-    }));
-    adapterProvider.server.post('/v1/menu', handleCtx(async (bot, req, res) => {
-        const { number } = req.body;
-        await bot.dispatch('MENU', { from: number, name: 'Usuario' });
-        return res.end('trigger');
-    }));
-    adapterProvider.server.post('/v1/blacklist', handleCtx(async (bot, req, res) => {
-        const { number, intent } = req.body;
-        if (intent === 'remove')
-            bot.blacklist.remove(number);
-        if (intent === 'add')
-            bot.blacklist.add(number);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ status: 'ok', number, intent }));
-    }));
     httpServer(Number(PORT));
     console.log(`🛜 Server running on port ${PORT}`);
 };

@@ -4,18 +4,20 @@
   "description": "",
   "main": "dist/app.js",
   "type": "module",
-"scripts": {
-  "build": "rollup -c",
-  "start": "node dist/app.js"
-},
+  "scripts": {
+    "build": "rollup -c",
+    "start": "node dist/app.js"
+  },
   "keywords": [],
   "dependencies": {
     "@builderbot/bot": "^1.2.5",
     "@builderbot/provider-meta": "^1.2.5",
     "dotenv": "^16.5.0",
+    "express": "^5.1.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/express": "^5.0.5",
     "@types/node": "^20.17.28",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.4.0",

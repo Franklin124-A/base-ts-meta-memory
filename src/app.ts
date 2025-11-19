@@ -6,9 +6,6 @@ import { MetaProvider as Provider } from '@builderbot/provider-meta';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
-import express from 'express';
-import bodyParser from 'body-parser';
-import axios from 'axios';
 
 import solicitudesFlow from '../flows/cesantias.flow';
 import beneficiosFlow from '../flows/Cartalaboral.Flow';
@@ -62,70 +59,6 @@ function verificarCedula(cedula: string) {
         return { encontrado: false, nombre: null };
     }
 }
-
-/* ------------------------------- Webhook Meta Manual ------------------------------- */
-const app = express();
-app.use(bodyParser.json());
-
-// GET para verificación de Meta
-app.get('/webhook', (req, res) => {
-    const verifyToken = process.env.VERIFY_TOKEN;
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token === verifyToken) {
-        console.log('✅ Webhook verificado correctamente con Meta');
-        res.status(200).send(challenge);
-    } else {
-        console.log('❌ Verificación fallida');
-        res.sendStatus(403);
-    }
-});
-
-// POST para recibir mensajes
-app.post('/webhook', async (req, res) => {
-    try {
-        console.log('📨 Webhook recibido desde Meta:');
-        console.log(JSON.stringify(req.body, null, 2));
-
-        res.sendStatus(200); // Confirma recepción a Meta
-
-        const changes = req.body?.entry?.[0]?.changes;
-        if (changes) {
-            for (const change of changes) {
-                if (change.value?.messages) {
-                    const message = change.value.messages[0];
-                    const text = message.text?.body || '[mensaje sin texto]';
-                    const from = message.from;
-
-                    console.log(`💬 Mensaje recibido de ${from}: ${text}`);
-
-                    // (Opcional) Responder automáticamente
-                    await axios.post(
-                        `https://graph.facebook.com/v22.0/${process.env.META_PHONE_NUMBER_ID}/messages`,
-                        {
-                            messaging_product: 'whatsapp',
-                            to: from,
-                            type: 'text',
-                            text: { body: '👋 Hola, soy tu Asistente Virtual de Recursos Humanos. ¿Cómo puedo ayudarte?' },
-                        },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}`,
-                                'Content-Type': 'application/json',
-                            },
-                        }
-                    );
-                    console.log('📤 Respuesta automática enviada');
-                }
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error procesando webhook:', error);
-        res.sendStatus(500);
-    }
-});
 
 /* ------------------------------- Menú Principal ------------------------------- */
 export const menuFlow = addKeyword<Provider, Database>(utils.setEvent('MENU'))
@@ -263,7 +196,6 @@ const welcomeFlow = addKeyword<Provider, Database>([
     );
 
 /* ------------------------------- Inicio del bot ------------------------------- */
-/* ------------------------------- Inicio del bot ------------------------------- */
 const main = async () => {
     const adapterFlow = createFlow([
         seguridadSocialFlow,
@@ -294,13 +226,42 @@ const main = async () => {
 
     const adapterDB = new Database();
 
-    const { httpServer } = await createBot({
+    const { handleCtx, httpServer } = await createBot({
         flow: adapterFlow,
         provider: adapterProvider,
         database: adapterDB,
     });
 
-    // 🚀 Inicia el servidor
+    // Endpoints adicionales
+    adapterProvider.server.post(
+        '/v1/messages',
+        handleCtx(async (bot, req, res) => {
+            const { number, message, urlMedia } = req.body;
+            await bot.sendMessage(number, message, { media: urlMedia ?? null });
+            return res.end('sended');
+        })
+    );
+
+    adapterProvider.server.post(
+        '/v1/menu',
+        handleCtx(async (bot, req, res) => {
+            const { number } = req.body;
+            await bot.dispatch('MENU', { from: number, name: 'Usuario' });
+            return res.end('trigger');
+        })
+    );
+
+    adapterProvider.server.post(
+        '/v1/blacklist',
+        handleCtx(async (bot, req, res) => {
+            const { number, intent } = req.body;
+            if (intent === 'remove') bot.blacklist.remove(number);
+            if (intent === 'add') bot.blacklist.add(number);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ status: 'ok', number, intent }));
+        })
+    );
+
     httpServer(Number(PORT));
     console.log(`🛜 Server running on port ${PORT}`);
 };
