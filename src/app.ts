@@ -31,9 +31,6 @@ function verificarCedula(cedula: string) {
     try {
         
         const rutaJson = path.resolve(process.cwd(), 'assets', 'base_datos.json');
-
-        //const message: string = cedula;
-        //console.log(message); // Output: Hello, TypeScript!
         
         console.log('Intentando leer archivo JSON en:', rutaJson);
         
@@ -169,7 +166,7 @@ const helpFlow = addKeyword<Provider, Database>(['ayuda', 'help', 'opciones', 'c
     ].join('\n'))
 
 
-const welcomeFlow = addKeyword<Provider, Database>(['hola', 'buenos dias','this is a text message', 'buenas', 'hi', 'hello', 'inicio','Holi','hola','holi','buenas tardes','buenas noches','Buenas tardes','Buenas noches','Hola como estan'])
+const welcomeFlow = addKeyword<Provider, Database>(['hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio','Holi','hola','holi','buenas tardes','buenas noches','Buenas tardes','Buenas noches','Hola como estan'])
     .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S., el mejor lugar para trabajar!*\n Soy tu Asistente Virtual de Recursos Humanos, diseñado exclusivamente para nuestros colaboradores .')
 
                
