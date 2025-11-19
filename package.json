@@ -5,10 +5,10 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "start": "node ./dist/app.js --env-file=.env ",
-    "lint": "eslint . --no-ignore",
-    "dev": "npx kill-port 3008 && npx nodemon --delay 1500ms ./src/app.ts",
-    "build": "npx eslint . --no-ignore"
+  "build": "rollup -c",                
+  "postinstall": "npm run build",       
+  "start": "node dist/app.js",          
+  "dev": "npx nodemon --delay 1500ms ./src/app.ts"
   },
   "keywords": [],
   "dependencies": {
