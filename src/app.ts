@@ -25,7 +25,8 @@ import seguridadSocialFlow from 'flows/seguridad.flow'
 
 dotenv.config()
 
-const PORT = process.env.PORT ?? 3008
+const PORT = process.env.PORT || 3000
+
 
 function verificarCedula(cedula: string) {
     try {

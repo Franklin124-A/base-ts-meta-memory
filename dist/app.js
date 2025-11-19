@@ -1030,7 +1030,7 @@ const seguridadSocialFlow = addKeyword(['seguridad'])
 });
 
 dotenv.config();
-const PORT = process.env.PORT ?? 3008;
+const PORT = process.env.PORT || 3000;
 function verificarCedula(cedula) {
     try {
         const rutaJson = path.resolve(process.cwd(), 'assets', 'base_datos.json');
@@ -1147,7 +1147,7 @@ const helpFlow = addKeyword(['ayuda', 'help', 'opciones', 'comandos'])
     '• Escribe *auxilio* para ver el menu',
     '¿En qué más puedo ayudarte?'
 ].join('\n'));
-const welcomeFlow = addKeyword(['hola', 'buenos dias', 'this is a text message', 'buenas', 'hi', 'hello', 'inicio', 'Holi', 'hola', 'holi', 'buenas tardes', 'buenas noches', 'Buenas tardes', 'Buenas noches', 'Hola como estan'])
+const welcomeFlow = addKeyword(['hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'Holi', 'hola', 'holi', 'buenas tardes', 'buenas noches', 'Buenas tardes', 'Buenas noches', 'Hola como estan'])
     .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S., el mejor lugar para trabajar!*\n Soy tu Asistente Virtual de Recursos Humanos, diseñado exclusivamente para nuestros colaboradores .')
     .addAnswer([
     'Para acceder a nuestros servicios, *necesito verificar tu identidad.*',
