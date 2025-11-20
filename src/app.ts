@@ -182,7 +182,7 @@ export const welcomeFlow = addKeyword<Provider, Database>([
     );
 
 // Fallback genérico
-const defaultFlow = addKeyword<Provider, Database>(['*'])
+const defaultFlow = addKeyword<Provider, Database>(['default','fallback'])
     .addAnswer('🤖 Hola 👋, soy tu asistente virtual. Escribe *menu* o *ayuda* para comenzar.');
 
 /* ------------------------------- Inicialización del bot ------------------------------- */
