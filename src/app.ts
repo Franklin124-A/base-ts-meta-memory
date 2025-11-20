@@ -195,6 +195,14 @@ const welcomeFlow = addKeyword<Provider, Database>([
         }
     );
 
+/* ------------------------------- Flujo genérico de fallback ------------------------------- */
+// Este flujo responde a cualquier mensaje que no coincida con otra palabra clave
+const defaultFlow = addKeyword<Provider, Database>(['*'])
+    .addAnswer(
+        '🤖 Hola 👋, soy tu asistente virtual de Recursos Humanos.\n' +
+        'Escribe *menu* para ver las opciones principales o *ayuda* para ver más comandos.'
+    );    
+
 /* ------------------------------- Inicio del bot ------------------------------- */
 const main = async () => {
     const adapterFlow = createFlow([
@@ -214,6 +222,7 @@ const main = async () => {
         bienestarFlow,
         vacantesFlow,
         eventosFlow,
+        defaultFlow
     ]);
 
     const adapterProvider = createProvider(Provider, {
