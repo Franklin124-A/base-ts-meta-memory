@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import { join } from 'path';
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot';
 import { MemoryDB as Database } from '@builderbot/bot';
 import { MetaProvider as Provider } from '@builderbot/provider-meta';
@@ -27,31 +26,30 @@ const PORT = process.env.PORT || 3000;
 function verificarCedula(cedula: string) {
     try {
         const rutaJson = path.resolve(process.cwd(), 'assets', 'base_datos.json');
-        console.log('Intentando leer archivo JSON en:', rutaJson);
+        console.log('📂 Intentando leer archivo JSON en:', rutaJson);
 
         if (!fs.existsSync(rutaJson)) {
-            console.error('El archivo JSON no existe en:', rutaJson);
+            console.error('❌ El archivo JSON no existe en:', rutaJson);
             return { encontrado: false, nombre: null };
         }
 
         const datosRaw = fs.readFileSync(rutaJson, 'utf8');
+        console.log('📄 Archivo leído correctamente. Longitud:', datosRaw.length);
+
         const datos = JSON.parse(datosRaw);
+        console.log('✅ JSON parseado correctamente. Total registros:', datos.length);
 
-        interface Usuario {
-            nombre: string;
-            cedula: string;
-            cargo: string;
-        }
-
-        const usuario = datos.find((row: Usuario) => String(row.cedula) === String(cedula));
+        const usuario = datos.find((row: any) => String(row.cedula) === String(cedula));
 
         if (usuario) {
+            console.log(`✅ Usuario encontrado: ${usuario.nombre} (${usuario.cedula})`);
             return { encontrado: true, nombre: usuario.nombre };
         } else {
+            console.warn(`⚠️ Cédula ${cedula} no encontrada en base_datos.json`);
             return { encontrado: false, nombre: null };
         }
     } catch (error) {
-        console.error('Error al verificar cédula:', error);
+        console.error('💥 Error al verificar cédula:', error);
         return { encontrado: false, nombre: null };
     }
 }
@@ -90,30 +88,18 @@ export const menuFlow = addKeyword<Provider, Database>(utils.setEvent('MENU'))
             }
 
             switch (option) {
-                case '1':
-                    return gotoFlow(seguridadSocialFlow);
-                case '2':
-                    return gotoFlow(solicitudesFlow);
-                case '3':
-                    return gotoFlow(beneficiosFlow);
-                case '4':
-                    return gotoFlow(reclutamientoFlow);
-                case '5':
-                    return gotoFlow(afiliacionesFlow);
-                case '6':
-                    return gotoFlow(auxiliosFlow);
-                case '7':
-                    return gotoFlow(rutasFlow);
-                case '8':
-                    return gotoFlow(comprasFlow);
-                case '9':
-                    return gotoFlow(actualizacionFlow);
-                case '10':
-                    return gotoFlow(bienestarFlow);
-                case '11':
-                    return gotoFlow(vacantesFlow);
-                case '12':
-                    return gotoFlow(eventosFlow);
+                case '1': return gotoFlow(seguridadSocialFlow);
+                case '2': return gotoFlow(solicitudesFlow);
+                case '3': return gotoFlow(beneficiosFlow);
+                case '4': return gotoFlow(reclutamientoFlow);
+                case '5': return gotoFlow(afiliacionesFlow);
+                case '6': return gotoFlow(auxiliosFlow);
+                case '7': return gotoFlow(rutasFlow);
+                case '8': return gotoFlow(comprasFlow);
+                case '9': return gotoFlow(actualizacionFlow);
+                case '10': return gotoFlow(bienestarFlow);
+                case '11': return gotoFlow(vacantesFlow);
+                case '12': return gotoFlow(eventosFlow);
                 default:
                     await flowDynamic([
                         '⚠️ Opción no válida.',
@@ -145,14 +131,29 @@ const helpFlow = addKeyword<Provider, Database>(['ayuda', 'help', 'opciones', 'c
         ].join('\n')
     );
 
-// Flujo de bienvenida con verificación
-const welcomeFlow = addKeyword<Provider, Database>([
+/* ------------------------------- PRIMER MENSAJE FLOW ------------------------------- */
+export const firstMessageFlow = addKeyword<Provider, Database>(['*'])
+    .addAction(async (ctx, { gotoFlow, state }) => {
+        const started = state.get('started');
+        if (!started) {
+            console.log('🎯 Primer mensaje detectado, redirigiendo a welcomeFlow...');
+            await state.update({ started: true });
+            return gotoFlow(welcomeFlow);
+        }
+    });
+
+/* ------------------------------- FLUJO DE BIENVENIDA ------------------------------- */
+export const welcomeFlow = addKeyword<Provider, Database>([
     'hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'holi', 'test message', 'buenas noches',
 ])
-    .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!* Soy tu Asistente Virtual de Recursos Humanos.')
+    .addAnswer(
+        '👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!*\nSoy tu Asistente Virtual de Recursos Humanos.',
+        { capture: false } // 👈 evita que el mensaje inicial se use como cédula
+    )
     .addAnswer(
         [
             'Para continuar, necesito verificar tu identidad.',
+            '',
             'Por favor, *ingresa tu número de cédula*:',
         ].join('\n'),
         { capture: true },
@@ -163,7 +164,7 @@ const welcomeFlow = addKeyword<Provider, Database>([
             if (resultado.encontrado) {
                 await state.update({ cedula, nombre: resultado.nombre });
                 await flowDynamic([
-                    `✅ *Identidad verificada*`,
+                    '✅ *Identidad verificada*',
                     `¡Hola ${resultado.nombre}! Tu cédula ${cedula} ha sido validada.`,
                     '',
                     'Accediendo al menú principal...',
@@ -172,6 +173,7 @@ const welcomeFlow = addKeyword<Provider, Database>([
             } else {
                 await flowDynamic([
                     '❌ *Cédula no reconocida*',
+                    '',
                     'Verifica el número e intenta nuevamente o contacta a soporte técnico.',
                 ].join('\n'));
                 return gotoFlow(welcomeFlow);
@@ -186,6 +188,7 @@ const defaultFlow = addKeyword<Provider, Database>(['*'])
 /* ------------------------------- Inicialización del bot ------------------------------- */
 const main = async () => {
     const adapterFlow = createFlow([
+        firstMessageFlow, // 👈 nuevo flujo que siempre dispara el welcomeFlow
         seguridadSocialFlow,
         welcomeFlow,
         menuFlow,
@@ -221,7 +224,6 @@ const main = async () => {
         database: adapterDB,
     });
 
-    // ✅ En Azure, solo este servidor debe escuchar el puerto principal
     httpServer(Number(PORT));
     console.log(`🟢 Bot de WhatsApp iniciado correctamente en puerto ${PORT}`);
     console.log(`🌐 Webhook disponible en: /webhook`);
