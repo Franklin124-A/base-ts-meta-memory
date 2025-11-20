@@ -3,6 +3,7 @@ import { join } from 'path';
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot';
 import { MemoryDB as Database } from '@builderbot/bot';
 import { MetaProvider as Provider } from '@builderbot/provider-meta';
+import { MetaProvider } from '@builderbot/provider-meta';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -292,22 +293,23 @@ const main = async () => {
         eventosFlow,
         defaultFlow
     ]);
-
-    const adapterProvider = createProvider(Provider, {
-        jwtToken: process.env.META_ACCESS_TOKEN,
-        numberId: process.env.META_PHONE_NUMBER_ID,
-        verifyToken: process.env.VERIFY_TOKEN,
-        version: 'v24.0',
-        appSecret: process.env.META_APP_SECRET,
-    });
+    
+  const adapterProvider: any = createProvider(Provider, {
+  jwtToken: process.env.META_ACCESS_TOKEN,
+  numberId: process.env.META_PHONE_NUMBER_ID,
+  verifyToken: process.env.VERIFY_TOKEN,
+  version: 'v24.0',
+  appSecret: process.env.META_APP_SECRET,
+});
 
     const adapterDB = new Database();
 
-    const { handleCtx, httpServer } = await createBot({
-        flow: adapterFlow,
-        provider: adapterProvider,
-        database: adapterDB,
-    });
+// @ts-ignore
+const { handleCtx, httpServer } = await createBot({
+    flow: adapterFlow,
+    provider: adapterProvider,
+    database: adapterDB,
+});
 
     httpServer(Number(PORT));
     console.log(`🛜 Server running on port ${PORT}`);
