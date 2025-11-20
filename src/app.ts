@@ -132,7 +132,7 @@ const helpFlow = addKeyword<Provider, Database>(['ayuda', 'help', 'opciones', 'c
     );
 
 /* ------------------------------- PRIMER MENSAJE FLOW ------------------------------- */
-export const firstMessageFlow = addKeyword<Provider, Database>(['*'])
+export const firstMessageFlow = addKeyword<Provider, Database>(['inicio', 'default', 'start', 'mensaje'])
     .addAction(async (ctx, { gotoFlow, state }) => {
         const started = state.get('started');
         if (!started) {
@@ -182,8 +182,13 @@ export const welcomeFlow = addKeyword<Provider, Database>([
     );
 
 // Fallback genérico
-const defaultFlow = addKeyword<Provider, Database>(['default','fallback'])
-    .addAnswer('🤖 Hola 👋, soy tu asistente virtual. Escribe *menu* o *ayuda* para comenzar.');
+// ✅ Fallback genérico corregido
+const defaultFlow = addKeyword<Provider, Database>(['default', 'fallback'])
+    .addAnswer(
+        '🤖 Hola 👋, soy tu asistente virtual de Recursos Humanos.\n' +
+        'Escribe *menu* para ver las opciones principales o *ayuda* para más comandos.'
+    );
+
 
 /* ------------------------------- Inicialización del bot ------------------------------- */
 const main = async () => {
