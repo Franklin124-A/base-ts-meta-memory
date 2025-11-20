@@ -6,6 +6,9 @@ import { MetaProvider as Provider } from '@builderbot/provider-meta';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
+import express from 'express';
+import bodyParser from 'body-parser';
+import axios from 'axios';
 
 import solicitudesFlow from '../flows/cesantias.flow';
 import beneficiosFlow from '../flows/Cartalaboral.Flow';
@@ -59,6 +62,72 @@ function verificarCedula(cedula: string) {
         return { encontrado: false, nombre: null };
     }
 }
+
+/* ------------------------------- Webhook directo desde Meta ------------------------------- */
+const app = express();
+app.use(bodyParser.json());
+
+// ✅ GET para verificación de Meta
+app.get('/webhook', (req, res) => {
+    const verifyToken = process.env.VERIFY_TOKEN;
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode && token === verifyToken) {
+        console.log('✅ Webhook verificado correctamente con Meta');
+        res.status(200).send(challenge);
+    } else {
+        console.log('❌ Verificación fallida');
+        res.sendStatus(403);
+    }
+});
+
+// ✅ POST para recibir y responder mensajes de WhatsApp
+app.post('/webhook', async (req, res) => {
+    try {
+        console.log('📨 Webhook recibido desde Meta:');
+        console.log(JSON.stringify(req.body, null, 2));
+
+        res.sendStatus(200); // Confirma recepción a Meta
+
+        const entry = req.body.entry?.[0];
+        const changes = entry?.changes?.[0];
+        const message = changes?.value?.messages?.[0];
+        const from = message?.from;
+        const text = message?.text?.body;
+
+        if (text && from) {
+            console.log(`💬 Mensaje recibido de ${from}: ${text}`);
+
+            // 🔹 Enviar una respuesta automática al remitente
+            await axios.post(
+                `https://graph.facebook.com/v24.0/${process.env.META_PHONE_NUMBER_ID}/messages`,
+                {
+                    messaging_product: 'whatsapp',
+                    to: from,
+                    type: 'text',
+                    text: {
+                        body: '👋 Hola, soy tu Asistente Virtual de Recursos Humanos.\n' +
+                              'Escribe *menu* para ver las opciones o *ayuda* para más información.'
+                    },
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            console.log('📤 Respuesta enviada correctamente a WhatsApp ✅');
+        } else {
+            console.log('⚠️ No se encontró texto o número en el mensaje entrante.');
+        }
+    } catch (error) {
+        console.error('❌ Error procesando webhook:', error.response?.data || error.message);
+    }
+});
 
 /* ------------------------------- Menú Principal ------------------------------- */
 export const menuFlow = addKeyword<Provider, Database>(utils.setEvent('MENU'))
@@ -196,12 +265,11 @@ const welcomeFlow = addKeyword<Provider, Database>([
     );
 
 /* ------------------------------- Flujo genérico de fallback ------------------------------- */
-// Este flujo responde a cualquier mensaje que no coincida con otra palabra clave
 const defaultFlow = addKeyword<Provider, Database>(['*'])
     .addAnswer(
         '🤖 Hola 👋, soy tu asistente virtual de Recursos Humanos.\n' +
-        'Escribe *menu* para ver las opciones principales o *ayuda* para ver más comandos.'
-    );    
+        'Escribe *menu* para ver las opciones principales o *ayuda* para más comandos.'
+    );
 
 /* ------------------------------- Inicio del bot ------------------------------- */
 const main = async () => {
@@ -229,7 +297,7 @@ const main = async () => {
         jwtToken: process.env.META_ACCESS_TOKEN,
         numberId: process.env.META_PHONE_NUMBER_ID,
         verifyToken: process.env.VERIFY_TOKEN,
-        version: 'v22.0',
+        version: 'v24.0',
         appSecret: process.env.META_APP_SECRET,
     });
 
@@ -241,38 +309,13 @@ const main = async () => {
         database: adapterDB,
     });
 
-    // Endpoints adicionales
-    adapterProvider.server.post(
-        '/v1/messages',
-        handleCtx(async (bot, req, res) => {
-            const { number, message, urlMedia } = req.body;
-            await bot.sendMessage(number, message, { media: urlMedia ?? null });
-            return res.end('sended');
-        })
-    );
-
-    adapterProvider.server.post(
-        '/v1/menu',
-        handleCtx(async (bot, req, res) => {
-            const { number } = req.body;
-            await bot.dispatch('MENU', { from: number, name: 'Usuario' });
-            return res.end('trigger');
-        })
-    );
-
-    adapterProvider.server.post(
-        '/v1/blacklist',
-        handleCtx(async (bot, req, res) => {
-            const { number, intent } = req.body;
-            if (intent === 'remove') bot.blacklist.remove(number);
-            if (intent === 'add') bot.blacklist.add(number);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            return res.end(JSON.stringify({ status: 'ok', number, intent }));
-        })
-    );
-
     httpServer(Number(PORT));
     console.log(`🛜 Server running on port ${PORT}`);
 };
 
 main();
+
+// 🔹 Express listener adicional
+app.listen(Number(PORT), () => {
+    console.log(`🛜 Express escuchando Webhook en el puerto ${PORT}`);
+});
