@@ -6,7 +6,7 @@ import { MetaProvider as Provider } from '@builderbot/provider-meta';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Importación de tus flujos
+// Flujos importados
 import solicitudesFlow from '../flows/cesantias.flow';
 import beneficiosFlow from '../flows/Cartalaboral.Flow';
 import reclutamientoFlow from '../flows/concursos.Flow';
@@ -21,14 +21,13 @@ import eventosFlow from '../flows/otros.flow';
 import seguridadSocialFlow from '../flows/seguridad.flow';
 
 dotenv.config();
-
 const PORT = process.env.PORT || 3000;
 
 /* ------------------------------- Verificación de cédula ------------------------------- */
 function verificarCedula(cedula: string) {
     try {
         const rutaJson = path.resolve(process.cwd(), 'assets', 'base_datos.json');
-        // console.log('Intentando leer archivo JSON en:', rutaJson); // Descomentar si necesitas depurar
+        console.log('Intentando leer archivo JSON en:', rutaJson);
 
         if (!fs.existsSync(rutaJson)) {
             console.error('El archivo JSON no existe en:', rutaJson);
@@ -47,10 +46,7 @@ function verificarCedula(cedula: string) {
         const usuario = datos.find((row: Usuario) => String(row.cedula) === String(cedula));
 
         if (usuario) {
-            return {
-                encontrado: true,
-                nombre: usuario.nombre,
-            };
+            return { encontrado: true, nombre: usuario.nombre };
         } else {
             return { encontrado: false, nombre: null };
         }
@@ -60,29 +56,29 @@ function verificarCedula(cedula: string) {
     }
 }
 
-/* ------------------------------- Menú Principal ------------------------------- */
+/* ------------------------------- Flujos principales ------------------------------- */
+
+// Menú principal
 export const menuFlow = addKeyword<Provider, Database>(utils.setEvent('MENU'))
     .addAnswer(
         [
             '🔍 *Menú Principal - Recursos Humanos*',
             '',
-            '¿En qué podemos ayudarte?',
+            '¿En qué puedo ayudarte?',
             '',
-            '1️⃣ 🏦 *Informacion de mi Seguridad Social*',
-            '2️⃣ 💰 *Cesantias*',
+            '1️⃣ 🏦 *Información de mi Seguridad Social*',
+            '2️⃣ 💰 *Cesantías*',
             '3️⃣ 📄 *Carta Laboral*',
             '4️⃣ 🏆 *Concursos Internos*',
-            '5️⃣ 🔍 *Caja de Compensacion*',
+            '5️⃣ 🔍 *Caja de Compensación*',
             '6️⃣ 📚 *Auxilios y Beneficios*',
             '7️⃣ 🚌 *Información de Rutas*',
             '8️⃣ 🛒 *Compra de Productos*',
-            '9️⃣ 🍽️ *Menu alternativo del casino*',
+            '9️⃣ 🍽️ *Menú alternativo del casino*',
             '🔟 🧘 *Seguridad y Salud en el trabajo*',
             '0️⃣ *Salir*',
             '',
             '*Responde con el número de la opción que necesitas*',
-            '',
-            'ℹ️ Puedes salir del menu escribiendo *"Salir"*',
         ].join('\n'),
         { capture: true },
         async (ctx, { flowDynamic, gotoFlow, endFlow }) => {
@@ -94,49 +90,69 @@ export const menuFlow = addKeyword<Provider, Database>(utils.setEvent('MENU'))
             }
 
             switch (option) {
-                case '1': return gotoFlow(seguridadSocialFlow);
-                case '2': return gotoFlow(solicitudesFlow);
-                case '3': return gotoFlow(beneficiosFlow);
-                case '4': return gotoFlow(reclutamientoFlow);
-                case '5': return gotoFlow(afiliacionesFlow);
-                case '6': return gotoFlow(auxiliosFlow);
-                case '7': return gotoFlow(rutasFlow);
-                case '8': return gotoFlow(comprasFlow);
-                case '9': return gotoFlow(actualizacionFlow);
-                case '10': return gotoFlow(bienestarFlow);
-                case '11': return gotoFlow(vacantesFlow);
-                case '12': return gotoFlow(eventosFlow);
+                case '1':
+                    return gotoFlow(seguridadSocialFlow);
+                case '2':
+                    return gotoFlow(solicitudesFlow);
+                case '3':
+                    return gotoFlow(beneficiosFlow);
+                case '4':
+                    return gotoFlow(reclutamientoFlow);
+                case '5':
+                    return gotoFlow(afiliacionesFlow);
+                case '6':
+                    return gotoFlow(auxiliosFlow);
+                case '7':
+                    return gotoFlow(rutasFlow);
+                case '8':
+                    return gotoFlow(comprasFlow);
+                case '9':
+                    return gotoFlow(actualizacionFlow);
+                case '10':
+                    return gotoFlow(bienestarFlow);
+                case '11':
+                    return gotoFlow(vacantesFlow);
+                case '12':
+                    return gotoFlow(eventosFlow);
                 default:
-                    await flowDynamic('⚠️ Opción no válida, por favor intenta de nuevo.');
+                    await flowDynamic([
+                        '⚠️ Opción no válida.',
+                        'Por favor selecciona una opción entre 1 y 10, o escribe "salir" para terminar.',
+                    ].join('\n'));
                     return gotoFlow(menuFlow);
             }
         }
     );
 
-/* ------------------------------- Flujos auxiliares ------------------------------- */
+// Comando de volver al menú
 export const volverMenuFlow = addKeyword<Provider, Database>(['menu', 'volver', 'inicio', 'principal', 'regresar'])
     .addAction(async (_, { gotoFlow }) => gotoFlow(menuFlow));
 
+// Flujo de ayuda
 const helpFlow = addKeyword<Provider, Database>(['ayuda', 'help', 'opciones', 'comandos'])
     .addAnswer('🆘 *Centro de Ayuda*')
     .addAnswer(
         [
-            'Estos son los comandos disponibles:',
-            '• *menu*: Ir al menú principal',
-            '• *salir*: Terminar la conversación',
+            'Comandos disponibles:',
+            '',
+            '• *menu* → Menú principal',
+            '• *politicas* → Políticas de RRHH',
+            '• *vacaciones* → Solicitud de tiempo libre',
+            '• *beneficios* → Ver compensaciones',
+            '• *reclutamiento* → Procesos de selección',
+            '• *auxilio* → Menú de auxilios',
             '¿En qué más puedo ayudarte?',
         ].join('\n')
     );
 
-/* ------------------------------- Bienvenida y verificación ------------------------------- */
+// Flujo de bienvenida con verificación
 const welcomeFlow = addKeyword<Provider, Database>([
     'hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'holi', 'buenas tardes', 'buenas noches',
 ])
-    .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!*\nSoy tu Asistente Virtual de Recursos Humanos.')
+    .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!* Soy tu Asistente Virtual de Recursos Humanos.')
     .addAnswer(
         [
-            'Para acceder a nuestros servicios, *necesito verificar tu identidad.*',
-            '',
+            'Para continuar, necesito verificar tu identidad.',
             'Por favor, *ingresa tu número de cédula*:',
         ].join('\n'),
         { capture: true },
@@ -146,20 +162,28 @@ const welcomeFlow = addKeyword<Provider, Database>([
 
             if (resultado.encontrado) {
                 await state.update({ cedula, nombre: resultado.nombre });
-                await flowDynamic(`✅ *Identidad verificada*. ¡Hola ${resultado.nombre}!`);
+                await flowDynamic([
+                    `✅ *Identidad verificada*`,
+                    `¡Hola ${resultado.nombre}! Tu cédula ${cedula} ha sido validada.`,
+                    '',
+                    'Accediendo al menú principal...',
+                ].join('\n'));
                 return gotoFlow(menuFlow);
             } else {
-                await flowDynamic('❌ *Cédula no reconocida*. Intenta nuevamente.');
+                await flowDynamic([
+                    '❌ *Cédula no reconocida*',
+                    'Verifica el número e intenta nuevamente o contacta a soporte técnico.',
+                ].join('\n'));
                 return gotoFlow(welcomeFlow);
             }
         }
     );
 
-/* ------------------------------- Flujo genérico ------------------------------- */
+// Fallback genérico
 const defaultFlow = addKeyword<Provider, Database>(['*'])
-    .addAnswer('🤖 Escribe *hola* para iniciar o *menu* para ver opciones.');
+    .addAnswer('🤖 Hola 👋, soy tu asistente virtual. Escribe *menu* o *ayuda* para comenzar.');
 
-/* ------------------------------- Inicio del bot ------------------------------- */
+/* ------------------------------- Inicialización del bot ------------------------------- */
 const main = async () => {
     const adapterFlow = createFlow([
         seguridadSocialFlow,
@@ -178,14 +202,15 @@ const main = async () => {
         bienestarFlow,
         vacantesFlow,
         eventosFlow,
-        defaultFlow
+        defaultFlow,
     ]);
 
     const adapterProvider = createProvider(Provider, {
-        jwtToken: process.env.META_ACCESS_TOKEN,
-        numberId: process.env.META_PHONE_NUMBER_ID,
-        verifyToken: process.env.VERIFY_TOKEN,
+        jwtToken: process.env.META_ACCESS_TOKEN!,
+        numberId: process.env.META_PHONE_NUMBER_ID!,
+        verifyToken: process.env.VERIFY_TOKEN!,
         version: 'v24.0',
+        appSecret: process.env.META_APP_SECRET!,
     });
 
     const adapterDB = new Database();
@@ -196,8 +221,10 @@ const main = async () => {
         database: adapterDB,
     });
 
-    httpServer(Number(PORT)); // BuilderBot maneja el servidor aquí
-    console.log(`🛜 Bot de RRHH ejecutándose en el puerto ${PORT}`);
+    // ✅ En Azure, solo este servidor debe escuchar el puerto principal
+    httpServer(Number(PORT));
+    console.log(`🟢 Bot de WhatsApp iniciado correctamente en puerto ${PORT}`);
+    console.log(`🌐 Webhook disponible en: /webhook`);
 };
 
 main();
