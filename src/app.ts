@@ -147,7 +147,7 @@ const helpFlow = addKeyword<Provider, Database>(['ayuda', 'help', 'opciones', 'c
 
 // Flujo de bienvenida con verificación
 const welcomeFlow = addKeyword<Provider, Database>([
-    'hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'holi', 'buenas tardes', 'buenas noches',
+    'hola', 'buenos dias', 'buenas', 'hi', 'hello', 'inicio', 'holi', 'test message', 'buenas noches',
 ])
     .addAnswer('👋 *¡Bienvenido a GrandBay Papeles Nacionales S.A.S.!* Soy tu Asistente Virtual de Recursos Humanos.')
     .addAnswer(
