@@ -223,15 +223,18 @@ const main = async () => {
 
     const adapterDB = new Database();
 
-    const { httpServer } = await createBot({
-        flow: adapterFlow,
-        provider: adapterProvider,
-        database: adapterDB,
-    });
+const { httpServer } = await createBot({
+    flow: adapterFlow,
+    provider: adapterProvider,
+    database: adapterDB,
+});
 
-    httpServer(Number(PORT));
-    console.log(`🟢 Bot de WhatsApp iniciado correctamente en puerto ${PORT}`);
-    console.log(`🌐 Webhook disponible en: /webhook`);
+// Azure asigna dinámicamente el puerto
+const PORT = process.env.PORT || 3000;
+
+httpServer(Number(PORT));
+console.log(`🟢 Bot de WhatsApp iniciado correctamente en puerto ${PORT}`);
+
 };
 
 main();
